@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Salesman Application</string>
+    <string name="top_bar_title">Adressen</string>
+    <string name="search_input_placeholder">Suche</string>
 </resources>
