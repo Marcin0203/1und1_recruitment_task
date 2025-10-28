@@ -16,6 +16,14 @@ val Roboto = FontFamily(
 )
 
 val Typography = Typography(
+    bodyMedium = TextStyle(
+        fontFamily = Roboto,
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+        lineHeight = 18.sp,
+        letterSpacing = 0.sp,
+        color = Black
+    ),
     bodyLarge = TextStyle(
         fontFamily = Roboto,
         fontWeight = FontWeight.Normal,

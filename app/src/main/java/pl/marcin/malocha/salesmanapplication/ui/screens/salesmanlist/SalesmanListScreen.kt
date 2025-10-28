@@ -46,6 +46,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import pl.marcin.malocha.salesmanapplication.ui.theme.Grey999
 import pl.marcin.malocha.salesmanapplication.ui.theme.GreyC6
+import pl.marcin.malocha.salesmanapplication.ui.theme.White
 
 sealed class SalesmanListIntent {
     data class QueryChanged(val value: TextFieldValue) : SalesmanListIntent()
@@ -150,9 +151,9 @@ private fun SearchInput(
                         text = stringResource(R.string.search_input_placeholder),
                         style = MaterialTheme.typography.bodyLarge.copy(color = Grey999)
                     )
-                } else {
-                    innerTextField()
                 }
+
+                innerTextField()
             }
 
             Icon(
@@ -210,8 +211,9 @@ fun SalesmanItem(
 
                 if (item.isExpanded) {
                     Text(
+                        modifier = Modifier.padding(top = 3.dp),
                         text = item.areas,
-                        style = MaterialTheme.typography.labelSmall.copy(color = Grey999)
+                        style = MaterialTheme.typography.bodyMedium.copy(color = Grey999)
                     )
                 }
             }
@@ -238,7 +240,10 @@ fun SalesmanItem(
 private fun AppBar() {
     CenterAlignedTopAppBar(
         title = {
-            Text(stringResource(R.string.top_bar_title))
+            Text(
+                text = stringResource(R.string.top_bar_title),
+                style = MaterialTheme.typography.labelSmall.copy(color = White, lineHeight = 19.sp)
+            )
         },
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
             containerColor = MaterialTheme.colorScheme.primary,

@@ -19,21 +19,27 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import pl.marcin.malocha.salesmanapplication.core.di.providers.DispatcherProvider
-import pl.marcin.malocha.salesmanapplication.data.repository.SalesmanRepository
+import pl.marcin.malocha.salesmanapplication.data.model.Salesman
+import pl.marcin.malocha.salesmanapplication.domain.usecase.FilterSalesmenUseCase
+import pl.marcin.malocha.salesmanapplication.domain.usecase.GetSalesmenUseCase
+import kotlin.collections.joinToString
 
 @HiltViewModel
 class SalesmanListViewModel @Inject constructor(
-    private val salesmanRepository: SalesmanRepository,
-    private val dispatchers: DispatcherProvider
+    private val dispatchers: DispatcherProvider,
+    private val getSalesmenUseCase: GetSalesmenUseCase,
+    private val filterSalesmenUseCase: FilterSalesmenUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow(SalesmanListUiState())
     val state: StateFlow<SalesmanListUiState> = _state
 
     private val intents = MutableSharedFlow<SalesmanListIntent>(extraBufferCapacity = 64)
+    private val salesmenState = MutableStateFlow(SalesmenState())
 
     init {
         bindIntents()
         observerForSalesmen()
+        observerForUiState()
     }
 
     fun send(intent: SalesmanListIntent) {
@@ -56,7 +62,14 @@ class SalesmanListViewModel @Inject constructor(
             .debounce(1000)
             .distinctUntilChanged()
             .onEach { value ->
-                filterSalesmen(value)
+                salesmenState.update {
+                    it.copy(
+                        filteredSalesmen = filterSalesmenUseCase(
+                            salesmen = salesmenState.value.salesmen,
+                            query = value
+                        )
+                    )
+                }
             }
             .flowOn(dispatchers.default)
             .launchIn(viewModelScope)
@@ -78,21 +91,32 @@ class SalesmanListViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private fun filterSalesmen(query: String) {
-
-    }
-
     private fun observerForSalesmen() {
         viewModelScope.launch(dispatchers.main) {
-            salesmanRepository
-                .getSalesmen()
-                .map { salesmen ->
-                    salesmen.mapIndexed { index, salesman ->
+            getSalesmenUseCase().collectLatest { salesmen ->
+                salesmenState.update {
+                    it.copy(
+                        salesmen = salesmen,
+                        filteredSalesmen = filterSalesmenUseCase(salesmen = salesmen, query = state.value.query.text)
+                    )
+                }
+            }
+        }
+    }
+
+    private fun observerForUiState() {
+        viewModelScope.launch(dispatchers.main) {
+            salesmenState
+                .map { salesmenState ->
+                    salesmenState.filteredSalesmen.mapIndexed { index, salesman ->
+                        val id = salesman.hashCode()
+                        val isExpanded = _state.value.salesmen.firstOrNull { it.id == id }?.isExpanded ?: false
+
                         SalesmanUiState(
-                            id = index,
+                            id = id,
                             avatarText = salesman.name.first().uppercase(),
                             name = salesman.name,
-                            isExpanded = false,
+                            isExpanded = isExpanded,
                             areas = salesman.areas.joinToString(", ")
                         )
                     }
@@ -115,4 +139,9 @@ data class SalesmanUiState(
     val name: String,
     val isExpanded: Boolean,
     val areas: String
+)
+
+data class SalesmenState(
+    val salesmen: List<Salesman> = emptyList(),
+    val filteredSalesmen: List<Salesman> = emptyList()
 )
