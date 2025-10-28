@@ -71,7 +71,7 @@ class SalesmanListViewModel @Inject constructor(
                     )
                 }
             }
-            .flowOn(dispatchers.default)
+            .flowOn(dispatchers.main)
             .launchIn(viewModelScope)
 
         intents
